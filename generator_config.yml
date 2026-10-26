@@ -1,0 +1,107 @@
+# Input to `make generate`.
+#
+# The provider / resources / data_sources sections use the format of
+# HashiCorp's tfplugingen-openapi generator config
+# (https://developer.hashicorp.com/terraform/plugin/code-generation/openapi-generator#generator-config).
+# tools/sfcgen reads this file strictly, derives the entries that follow REST
+# path conventions (see `derive`), merges the explicit entries below over
+# them, and writes the plain config tfplugingen-openapi consumes to
+# build/generator_config.yml. Keys marked "sfcgen" are not part of the
+# tfplugingen-openapi format and are only used by tools/sfcgen.
+#
+# generator/coverage.txt (regenerated) lists every API operation and what the
+# provider does with it, so a new endpoint shows up there in the nightly
+# regeneration PR.
+
+provider:
+  name: sfcompute
+
+# sfcgen: derive entries from path conventions under these prefixes. Earlier
+# prefixes win when the same name exists under several (a /preview/v2 route
+# that graduated to /v2 is generated from /v2).
+#
+#   POST <p>/<things> + GET and DELETE <p>/<things>/{id}   => resource <thing>
+#     (+ PATCH, else PUT, <p>/<things>/{id} as the in-place update)
+#   GET <p>/<things>/{id}                                   => data source <thing>
+#   GET <p>/<things>                                        => data source <things>
+#
+# A derived resource that is not listed under `resources` with
+# `spending: false` is treated as spending money (see below).
+derive:
+  resources: true
+  data_sources: true
+  prefixes: [/v2, /preview/v2]
+
+# sfcgen: derived names that must not be generated, with the reason.
+skip:
+  resources:
+    image: >-
+      POST /v2/images only starts a multipart upload; a usable image resource
+      needs upload handling (parts, completion) that the generic runtime does
+      not implement. Images are exposed as data sources.
+  data_sources:
+    me: exposed as data source `account` instead.
+
+resources:
+  # Free to create and destroy (verified against docs.sfcompute.com; none of
+  # these buy, sell or consume compute time).
+  workspace:
+    spending: false
+  pool:
+    # A new pool starts with no allocation; compute is added by orders.
+    spending: false
+  firewall:
+    spending: false
+  instance_template:
+    spending: false
+  infiniband_partition:
+    spending: false
+
+  # Guarded: creating these requires `allow_spending = true` in the provider.
+  instance:
+    spending: true
+    spending_note: >-
+      an instance draws on its pool's purchased compute allocation while it
+      runs, and can displace lower-priority instances on that pool
+    # DELETE requires the instance to be terminated first.
+    before_delete:
+      - path: /v2/instances/{id}/terminate
+        method: POST
+  order:
+    # Not derivable: orders are cancelled, not deleted, and cannot be updated
+    # (every change places a new order).
+    spending: true
+    spending_note: >-
+      it places a buy or sell order on the SF Compute market, which can spend
+      credits (or sell your compute) as soon as it fills
+    create:
+      path: /v2/orders
+      method: POST
+    read:
+      path: /v2/orders/{id}
+      method: GET
+    delete:
+      path: /v2/orders/{id}/cancel
+      method: POST
+    # 422 "Order cannot be cancelled": it already filled or was cancelled;
+    # destroying the resource then just stops tracking it.
+    delete_accept_status: [422]
+
+data_sources:
+  # Not derivable from path conventions; listed explicitly.
+  account:
+    read:
+      path: /preview/v2/me
+      method: GET
+  sku_availability:
+    read:
+      path: /v2/skus/{id}/availability
+      method: GET
+  instance_ssh:
+    read:
+      path: /v2/instances/{id}/ssh
+      method: GET
+  orderbook_quote:
+    read:
+      path: /preview/v2/orderbook/quote
+      method: GET
