@@ -1,0 +1,1 @@
+terraform import sfcompute_infiniband_partition.training ibpart_k3RnX9vLm7Qp2Yw5Jd8F

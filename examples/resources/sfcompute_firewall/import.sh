@@ -1,0 +1,1 @@
+terraform import sfcompute_firewall.ssh_and_https frwl_k3RnX9vLm7Qp2Yw5Jd8F
