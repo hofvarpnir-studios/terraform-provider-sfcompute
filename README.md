@@ -249,7 +249,10 @@ per-resource code.
   at all), which keep the applied value. `null` and empty collections are not
   drift. A 404 removes the resource from state.
 * **Plan**: unset optional+computed attributes keep their prior value instead
-  of becoming "known after apply"; so do `id` and `created_at`.
+  of becoming "known after apply"; so do `id` and `created_at`. A consequence
+  (standard for optional+computed attributes): removing an argument such as
+  `tags` from configuration leaves the remote value as it is; set it
+  explicitly (`tags = {}`) to clear it.
 * **Delete** runs any `before_delete` actions (terminate an instance), treats
   404 as done, retries 409 Conflict for up to 5 minutes, and treats
   configured statuses (422 for an order that cannot be cancelled) as done with
