@@ -438,7 +438,8 @@ func normalizeRules(v any) []any {
 // and two SKUs.
 func (s *Server) SeedFixtures() {
 	s.Seed("image", map[string]any{"object": "image", "id": "image_ubuntu2404", "name": "ubuntu-24.04-cuda-13.2",
-		"resource_path": "sfc:image:sfcompute:public:ubuntu-24.04-cuda-13.2", "upload_status": "completed", "created_at": int64(1_690_000_000)})
+		"resource_path": "sfc:image:sfcompute:public:ubuntu-24.04-cuda-13.2", "upload_status": "completed", "created_at": int64(1_690_000_000),
+		"is_public": true, "workspace": map[string]any{"id": "wksp_sfcpublic0001", "name": "public"}})
 	for i, alias := range []string{"h100-sea", "h200-iad", "h100-iad"} {
 		s.Seed("sku", map[string]any{"object": "sku", "id": "sku_mock" + alias[:4] + string(rune('a'+i)), "alias": alias,
 			"accelerator": map[string]any{"value": strings.ToUpper(alias[:4]), "display_value": strings.ToUpper(alias[:4])}})
