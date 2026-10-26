@@ -1,0 +1,130 @@
+name: regenerate
+
+# Nightly: refresh spec/ from docs.sfcompute.com, regenerate the provider,
+# and open (or update) a pull request when anything changed. Auto-merge is
+# enabled only when the tests pass in this workflow.
+#
+# Repository settings this needs:
+#   - Settings > Actions > General > "Allow GitHub Actions to create and
+#     approve pull requests"
+#   - Settings > General > "Allow auto-merge", and branch protection on main
+#     that requires the checks from test.yml (without required checks,
+#     auto-merge cannot be enabled and the PR waits for a human).
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write # to dispatch test.yml on the PR branch
+
+concurrency:
+  group: regenerate
+  cancel-in-progress: false
+
+env:
+  BRANCH: automation/regenerate
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Fetch the OpenAPI spec
+        run: make fetch-spec
+
+      - name: Regenerate
+        run: make generate
+
+      - name: Detect changes
+        id: changes
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Generated output is unchanged; nothing to do."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --stat
+          fi
+
+      - name: Test
+        id: test
+        if: steps.changes.outputs.changed == 'true'
+        continue-on-error: true
+        run: |
+          TF_ACC_TERRAFORM_PATH="$(command -v terraform)"
+          export TF_ACC_TERRAFORM_PATH
+          set -o pipefail
+          go test -count=1 ./... 2>&1 | tee "$RUNNER_TEMP/test.log"
+
+      - name: Open or update the pull request
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TEST_OUTCOME: ${{ steps.test.outcome }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git commit -q -m "Regenerate from the SF Compute OpenAPI spec ($(date -u +%Y-%m-%d))"
+          git push --force origin "$BRANCH"
+
+          {
+            echo "Automated nightly regeneration: \`make fetch-spec && make generate\`."
+            echo
+            if [ "$TEST_OUTCOME" = success ]; then
+              echo "\`go test ./...\` passed in the regenerate workflow, so auto-merge is enabled."
+            else
+              echo "**\`go test ./...\` failed**, so auto-merge is NOT enabled. Last lines:"
+              echo '```'
+              tail -n 40 "$RUNNER_TEMP/test.log" || true
+              echo '```'
+            fi
+            echo
+            echo "Resources newly derived from the spec are treated as spending money"
+            echo "until they are classified with \`spending: false\` in generator_config.yml."
+            echo
+            echo "### Coverage changes (generator/coverage.txt)"
+            echo '```diff'
+            git diff HEAD~1 -- generator/coverage.txt | tail -n +5 || true
+            echo '```'
+            echo
+            echo "### Files"
+            echo '```'
+            git diff --stat HEAD~1
+            echo '```'
+          } > "$RUNNER_TEMP/body.md"
+
+          number=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          if [ -z "$number" ]; then
+            gh pr create --base main --head "$BRANCH" \
+              --title "Regenerate from the SF Compute OpenAPI spec" \
+              --body-file "$RUNNER_TEMP/body.md"
+            number=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          else
+            gh pr edit "$number" --body-file "$RUNNER_TEMP/body.md"
+          fi
+
+          # Pull requests opened with GITHUB_TOKEN do not trigger workflows,
+          # so dispatch the test workflow on the branch; its checks attach
+          # to the branch head commit, which is what branch protection
+          # (and therefore auto-merge) waits for.
+          gh workflow run test.yml --ref "$BRANCH"
+
+          if [ "$TEST_OUTCOME" = success ]; then
+            gh pr merge "$number" --auto --squash
+          else
+            gh pr merge "$number" --disable-auto || true
+          fi

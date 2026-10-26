@@ -1,0 +1,91 @@
+name: test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  # Lets the nightly regenerate workflow run the checks on its PR: pull
+  # requests opened with GITHUB_TOKEN do not trigger workflows themselves.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go build ./...
+      - run: go vet ./...
+      - name: gofmt
+        run: |
+          unformatted=$(git ls-files -z '*.go' | xargs -0 gofmt -l)
+          if [ -n "$unformatted" ]; then echo "not gofmt'ed:"; echo "$unformatted"; exit 1; fi
+
+  generated:
+    name: generated code is up to date
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - run: make generate
+      - name: diff
+        run: |
+          git add -A
+          if ! git diff --cached --quiet; then
+            echo "::error::make generate changed files; run it and commit the result"
+            git diff --cached --stat
+            exit 1
+          fi
+
+  test:
+    name: go test (${{ matrix.cli }} ${{ matrix.version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cli: terraform
+            version: "~1.5.0"
+          - cli: terraform
+            version: latest
+          - cli: opentofu
+            version: latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - if: matrix.cli == 'terraform'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.version }}
+          terraform_wrapper: false
+      - if: matrix.cli == 'opentofu'
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ matrix.version }}
+          tofu_wrapper: false
+      - name: go test
+        run: |
+          if [ "${{ matrix.cli }}" = opentofu ]; then
+            TF_ACC_TERRAFORM_PATH="$(command -v tofu)"
+            export TF_ACC_PROVIDER_HOST=registry.opentofu.org
+          else
+            TF_ACC_TERRAFORM_PATH="$(command -v terraform)"
+          fi
+          export TF_ACC_TERRAFORM_PATH
+          go test -count=1 ./...
