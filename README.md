@@ -304,12 +304,16 @@ Push a `v*` tag. `.github/workflows/release.yml` runs the tests, imports the
 signing key from the `GPG_PRIVATE_KEY` and `PASSPHRASE` secrets, and runs
 goreleaser, which publishes per-platform zips, a `SHA256SUMS` file with its
 detached signature, and `terraform-registry-manifest.json` (protocol 6.0) as
-the Terraform and OpenTofu registries expect. Register the public key with
-the registries before the first release.
+the Terraform and OpenTofu registries expect.
 
-The nightly workflow needs, in the repository settings, "Allow GitHub Actions
-to create and approve pull requests", "Allow auto-merge", and branch
-protection on `main` requiring the `test` workflow's checks.
+Releases are signed with the RSA-4096 key in [`signing-key.asc`](signing-key.asc),
+fingerprint `5BDC E571 32CB E074 E6AF  6CF9 68E0 5251 9674 2213`. The private
+key exists only in the repository's Actions secrets; if it's ever lost, generate a
+new one, update the secrets and this file, and add it to both registries.
+
+The nightly workflow relies on repository settings that are in place: "Allow GitHub
+Actions to create and approve pull requests", "Allow auto-merge", and a `main`
+ruleset requiring the `test` workflow's checks.
 
 ## License
 
