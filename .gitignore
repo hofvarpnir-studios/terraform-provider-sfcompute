@@ -1,0 +1,22 @@
+# Build output
+/terraform-provider-sfcompute
+/dist/
+/bin/
+
+# Intermediate code generation artifacts (see Makefile)
+/build/
+
+# Terraform / OpenTofu working files from local experiments
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+.terraformrc
+terraform.rc
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
