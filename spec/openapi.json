@@ -4400,7 +4400,7 @@
             ]
           },
           "data": {
-            "description": "The page of events, oldest first.",
+            "description": "The page of events, in the order they were recorded.",
             "items": {
               "$ref": "#/components/schemas/v2.EventResponsePreview"
             },
@@ -5049,7 +5049,7 @@
         "operationId": "list_events_preview",
         "parameters": [
           {
-            "description": "Return events after this cursor, exclusive. A cursor only works with the same filter parameters it was created with.",
+            "description": "Return events after this cursor, exclusive. A cursor only works with the same `action`, `target`, and `target_type` it was created with.",
             "in": "query",
             "name": "starting_after",
             "required": false,
@@ -5140,7 +5140,7 @@
                 }
               }
             },
-            "description": "Invalid filter parameters, or a cursor reused with different filters."
+            "description": "Invalid filter parameters, or a cursor reused with a different `action`, `target`, or `target_type`."
           },
           "401": {
             "content": {
@@ -11340,7 +11340,7 @@
                 }
               }
             },
-            "description": "Pool has active dependencies (orders, future allocations, nodes, deployments, procurements, or pending transfers)."
+            "description": "Pool has active dependencies (orders, future allocations, instances, deployments, procurements, or pending transfers)."
           },
           "429": {
             "content": {
