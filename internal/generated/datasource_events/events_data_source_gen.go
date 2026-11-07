@@ -93,8 +93,8 @@ func EventsDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "The page of events, oldest first.",
-				MarkdownDescription: "The page of events, oldest first.",
+				Description:         "The page of events, in the order they were recorded.",
+				MarkdownDescription: "The page of events, in the order they were recorded.",
 			},
 			"has_more": schema.BoolAttribute{
 				Computed:            true,
@@ -119,8 +119,8 @@ func EventsDataSourceSchema(ctx context.Context) schema.Schema {
 			"starting_after": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Return events after this cursor, exclusive. A cursor only works with the same filter parameters it was created with.",
-				MarkdownDescription: "Return events after this cursor, exclusive. A cursor only works with the same filter parameters it was created with.",
+				Description:         "Return events after this cursor, exclusive. A cursor only works with the same `action`, `target`, and `target_type` it was created with.",
+				MarkdownDescription: "Return events after this cursor, exclusive. A cursor only works with the same `action`, `target`, and `target_type` it was created with.",
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile("^evtc_[A-Za-z0-9_-]+$"), ""),
 				},

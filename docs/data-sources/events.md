@@ -20,7 +20,7 @@ Reads events from SF Compute (`GET /preview/v2/events`). All pages are fetched u
 - `action` (String) Only return events with exactly this action.
 - `limit` (Number) Maximum number of events to return per page.
 - `since` (Number) Unix timestamp. Only return events that occurred at or after this time.
-- `starting_after` (String) Return events after this cursor, exclusive. A cursor only works with the same filter parameters it was created with.
+- `starting_after` (String) Return events after this cursor, exclusive. A cursor only works with the same `action`, `target`, and `target_type` it was created with.
 - `target` (String) Only return events about this target id.
 - `target_type` (String) Only return events whose targets are this kind of resource. Redundant if `action` is specified.
 - `until` (Number) Unix timestamp. Only return events that occurred at or before this time.
@@ -28,7 +28,7 @@ Reads events from SF Compute (`GET /preview/v2/events`). All pages are fetched u
 ### Read-Only
 
 - `cursor` (String) The last event's cursor. Pass it as `starting_after` to fetch the next page. Omitted when `data` is empty.
-- `data` (Attributes List) The page of events, oldest first. (see [below for nested schema](#nestedatt--data))
+- `data` (Attributes List) The page of events, in the order they were recorded. (see [below for nested schema](#nestedatt--data))
 - `has_more` (Boolean) Whether more events are available after this page.
 
 <a id="nestedatt--data"></a>

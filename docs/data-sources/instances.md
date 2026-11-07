@@ -23,6 +23,7 @@ data "sfcompute_instances" "running" {
 
 ### Optional
 
+- `_preview_firewall` (List of String) **Preview.** Filter by firewall (ID or resource path; repeatable). Instances attached to any of the given firewalls match.
 - `created_after` (Number) Filter to instances created at or after this Unix timestamp (seconds).
 - `created_before` (Number) Filter to instances created at or before this Unix timestamp (seconds).
 - `ending_before` (String) Cursor for backward pagination.
