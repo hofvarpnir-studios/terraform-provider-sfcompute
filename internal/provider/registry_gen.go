@@ -276,7 +276,7 @@ var DataSourceDefinitions = []runtime.DataSourceDefinition{
 	{
 		Name:          "instances",
 		Schema:        datasource_instances.InstancesDataSourceSchema,
-		Read:          runtime.Operation{Method: "GET", Path: "/v2/instances", Query: []runtime.Param{{Name: "workspace", Attr: "workspace"}, {Name: "id", Attr: "id", Array: true}, {Name: "pool", Attr: "pool", Array: true}, {Name: "subnet", Attr: "subnet", Array: true}, {Name: "status", Attr: "status", Array: true}, {Name: "created_after", Attr: "created_after"}, {Name: "created_before", Attr: "created_before"}, {Name: "sku", Attr: "sku", Array: true}, {Name: "limit", Attr: "limit"}, {Name: "starting_after", Attr: "starting_after"}, {Name: "ending_before", Attr: "ending_before"}, {Name: "tag", Attr: "tag", Array: true}, {Name: "tag_key", Attr: "tag_key", Array: true}}},
+		Read:          runtime.Operation{Method: "GET", Path: "/v2/instances", Query: []runtime.Param{{Name: "workspace", Attr: "workspace"}, {Name: "id", Attr: "id", Array: true}, {Name: "pool", Attr: "pool", Array: true}, {Name: "subnet", Attr: "subnet", Array: true}, {Name: "_preview_firewall", Attr: "_preview_firewall", Array: true}, {Name: "status", Attr: "status", Array: true}, {Name: "created_after", Attr: "created_after"}, {Name: "created_before", Attr: "created_before"}, {Name: "sku", Attr: "sku", Array: true}, {Name: "limit", Attr: "limit"}, {Name: "starting_after", Attr: "starting_after"}, {Name: "ending_before", Attr: "ending_before"}, {Name: "tag", Attr: "tag", Array: true}, {Name: "tag_key", Attr: "tag_key", Array: true}}},
 		List:          true,
 		Paginate:      true,
 		WorkspaceAttr: "workspace",
