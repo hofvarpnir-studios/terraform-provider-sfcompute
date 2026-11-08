@@ -2752,7 +2752,7 @@
           },
           "compute_limit_offset_price_ceiling_dollars_per_node_hour": {
             "description": "Price ceiling for standing limit sell orders to offset [compute limit usage](https://docs.sfcompute.com/preview/limits#compute-limits), expressed as a decimal string in dollars per node-hour. `null` means sell orders do not offset usage.",
-            "example": "25.00",
+            "example": "38.50",
             "type": [
               "string",
               "null"
@@ -4400,7 +4400,7 @@
             ]
           },
           "data": {
-            "description": "The page of events, oldest first.",
+            "description": "The page of events, in the order they were recorded.",
             "items": {
               "$ref": "#/components/schemas/v2.EventResponsePreview"
             },
@@ -4615,6 +4615,20 @@
               "type"
             ],
             "type": "object"
+          },
+          {
+            "description": "The sell's `capacity` does not hold the compute it would sell, after what that capacity's other open sell orders already offer. The quote estimates the order as if it did; placing it as is will be rejected.",
+            "properties": {
+              "type": {
+                "const": "insufficient_free_compute_balance",
+                "default": "insufficient_free_compute_balance",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -4677,12 +4691,12 @@
                   },
                   {
                     "$ref": "#/components/schemas/Schedule",
-                    "description": "The allocation the estimate actually matched. It can be smaller than the requested schedule: an `allow_partial` estimate may match fewer nodes or less time, and an order that starts now cannot fill the minute already under way. Like the rate, it is an estimate, not a promise to fill."
+                    "description": "The allocation the estimate actually matched. It can be smaller than the requested schedule: an `allow_partial` estimate may match fewer nodes or less time, an order that starts now cannot fill the minute already under way, and a sell first fills from the first allocation schedule grid time more than 5 minutes after it's placed. Like the rate, it is an estimate, not a promise to fill."
                   }
                 ]
               },
               "matched_node_minutes": {
-                "description": "Node-minutes the quoted rate was derived over, present only when the estimate matched part of the order rather than all of it. To estimate the execution total, multiply the rate by this area in node-hours (`matched_node_minutes / 60`), not by the full `allocation_schedule_delta` rectangle.\n\nWhen absent, the whole order matched and the rectangle is the area to price. For a buy the product can overstate the execution total: its rate is derived over the order's remaining window less one minute, so it still clears if placement lands a minute later, and is capped at `limit_price_dollars_per_node_hour` when one is sent.\n\nA partial quote's rate is rounded down for a sell and up for a buy, which puts the product within $0.000001 per matched node-minute of the exact total.\n\nTreat this area as an estimate rather than a guarantee: when the match combines resting orders at different prices, posting the quoted rate as a limit may fill less than this.",
+                "description": "Node-minutes the quoted rate was derived over, present only when the estimate matched part of the order rather than all of it, including a sell that can't fill the start of its window. To estimate the execution total, multiply the rate by this area in node-hours (`matched_node_minutes / 60`), not by the full `allocation_schedule_delta` rectangle.\n\nWhen absent, the whole order matched and the rectangle is the area to price; an order starting now can't fill the minute already under way, so matching all of it after that minute is whole. For a buy the product can overstate the execution total: its rate is derived over the order's remaining window less one minute, so it still clears if placement lands a minute later, and is capped at `limit_price_dollars_per_node_hour` when one is sent.\n\nA partial quote's rate is rounded down for a sell and up for a buy, which puts the product within $0.000001 per matched node-minute of the exact total.\n\nTreat this area as an estimate rather than a guarantee: when the match combines resting orders at different prices, posting the quoted rate as a limit may fill less than this.",
                 "format": "int64",
                 "type": [
                   "integer",
@@ -4963,6 +4977,25 @@
         ],
         "type": "string"
       },
+      "v2.RebootInstanceResponse": {
+        "properties": {
+          "object": {
+            "const": "instance_reboot",
+            "default": "instance_reboot",
+            "readOnly": true,
+            "type": "string"
+          },
+          "request_id": {
+            "description": "ID of the instance.reboot_requested activity event.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "request_id"
+        ],
+        "type": "object"
+      },
       "v2.SellOrderPreviewRequest": {
         "properties": {
           "allow_partial": {
@@ -5049,7 +5082,7 @@
         "operationId": "list_events_preview",
         "parameters": [
           {
-            "description": "Return events after this cursor, exclusive. A cursor only works with the same filter parameters it was created with.",
+            "description": "Return events after this cursor, exclusive. A cursor only works with the same `action`, `target`, and `target_type` it was created with.",
             "in": "query",
             "name": "starting_after",
             "required": false,
@@ -5140,7 +5173,7 @@
                 }
               }
             },
-            "description": "Invalid filter parameters, or a cursor reused with different filters."
+            "description": "Invalid filter parameters, or a cursor reused with a different `action`, `target`, or `target_type`."
           },
           "401": {
             "content": {
@@ -7527,7 +7560,7 @@
                       1790686800
                     ]
                   },
-                  "compute_limit_offset_price_ceiling_dollars_per_node_hour": "25.00",
+                  "compute_limit_offset_price_ceiling_dollars_per_node_hour": "38.50",
                   "object": "platform_constants"
                 },
                 "schema": {
@@ -8862,6 +8895,20 @@
             "style": "form"
           },
           {
+            "description": "**Preview.** Filter by firewall (ID or resource path; repeatable). Instances attached to any of the given firewalls match.",
+            "explode": true,
+            "in": "query",
+            "name": "_preview_firewall",
+            "required": false,
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/ResourcePathOrId_FirewallId"
+              },
+              "type": "array"
+            },
+            "style": "form"
+          },
+          {
             "description": "Filter by instance status (repeatable).",
             "explode": true,
             "in": "query",
@@ -9757,6 +9804,145 @@
           }
         },
         "summary": "Get instance logs",
+        "tags": [
+          "Instances"
+        ]
+      }
+    },
+    "/v2/instances/{id}/reboot": {
+      "post": {
+        "description": "Hard resets a running guest without a graceful shutdown. The instance stays on the same host and retains its disks, identity, and network configuration. Unsaved data can be lost. Returns the ID of the instance.reboot_requested activity event. The instance.rebooting event means the reset has started; it does not mean the guest has finished booting. Rejected requests produce instance.reboot_rejected. Pending requests continue to block new reboots if the instance stops responding.",
+        "operationId": "reboot_instance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "A resource path like 'sfc:instance:acme:prod:my-instance' _or_ an ID. Resource paths are human-readable but not stable - they change when resources are renamed or moved. IDs are stable and permanent.",
+              "examples": [
+                "inst_k3R-nX9vLm7Qp2Yw5Jd8F"
+              ],
+              "pattern": "(inst_[0-9a-zA-Z_-]{1,21})|(sfc:instance:[a-zA-Z0-9._-]+(:[a-zA-Z0-9._-]+){2,2})",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Optional key scoped to this instance. Reusing an accepted key returns 202 with the same request ID without scheduling another reboot. Use a new key for each new reboot.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2.RebootInstanceResponse"
+                }
+              }
+            },
+            "description": "Reboot request accepted."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestError"
+                }
+              }
+            },
+            "description": "Malformed request parameters or body."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedError"
+                }
+              }
+            },
+            "description": "Unauthorized."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "Forbidden."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            },
+            "description": "Instance not found or already terminated."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictError"
+                }
+              }
+            },
+            "description": "Another reboot is pending for this instance."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnprocessableEntityError"
+                }
+              }
+            },
+            "description": "The instance is not running."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            },
+            "description": "Rate limit exceeded. Retry after the interval indicated by the rate-limit response headers."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerError"
+                }
+              }
+            },
+            "description": "Internal server error."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceUnavailableError"
+                }
+              }
+            },
+            "description": "Reboot is temporarily unavailable for this instance."
+          }
+        },
+        "summary": "Hard reboot instance",
         "tags": [
           "Instances"
         ]
@@ -11340,7 +11526,7 @@
                 }
               }
             },
-            "description": "Pool has active dependencies (orders, future allocations, nodes, deployments, procurements, or pending transfers)."
+            "description": "Pool has active dependencies (orders, future allocations, instances, deployments, procurements, or pending transfers)."
           },
           "429": {
             "content": {

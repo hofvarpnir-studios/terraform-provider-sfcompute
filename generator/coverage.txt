@@ -43,6 +43,7 @@ GET /v2/instances/{id}                                resource sfcompute_instanc
 PATCH /v2/instances/{id}                              resource sfcompute_instance (update)
 GET /v2/instances/{id}/cloud_init_user_data           not generated: no path convention matches; add an explicit data_sources entry to expose it
 GET /v2/instances/{id}/logs                           not generated: no path convention matches; add an explicit data_sources entry to expose it
+POST /v2/instances/{id}/reboot                        not generated: action endpoint (not a CRUD operation of any configured resource)
 POST /v2/instances/{id}/replace                       not generated: action endpoint (not a CRUD operation of any configured resource)
 GET /v2/instances/{id}/ssh                            data source sfcompute_instance_ssh
 POST /v2/instances/{id}/terminate                     resource sfcompute_instance (before delete)
