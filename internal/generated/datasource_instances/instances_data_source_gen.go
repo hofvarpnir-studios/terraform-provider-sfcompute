@@ -20,6 +20,13 @@ import (
 func InstancesDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"_preview_firewall": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "**Preview.** Filter by firewall (ID or resource path; repeatable). Instances attached to any of the given firewalls match.",
+				MarkdownDescription: "**Preview.** Filter by firewall (ID or resource path; repeatable). Instances attached to any of the given firewalls match.",
+			},
 			"created_after": schema.Int64Attribute{
 				Optional:            true,
 				Computed:            true,
