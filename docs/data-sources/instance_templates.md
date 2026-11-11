@@ -45,6 +45,7 @@ Read-Only:
 - `name` (String)
 - `owner` (String)
 - `resource_path` (String) A resource path for a instance_template resource. Format: sfc:instance_template:<account>:<workspace>:<name>.
+- `subnet` (String) Subnet instances started with this template are placed in, if any. Instances without a subnet use an ephemeral subnet (isolated, no east-west traffic with other VMs).
 - `tags` (Map of String) Metadata tags attached to this instance template. Instances launched from it don't inherit these tags.
 - `workspace` (String)
 - `workspace_id` (String)

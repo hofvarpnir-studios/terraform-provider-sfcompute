@@ -77,6 +77,11 @@ func InstanceTemplateResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "A resource path for a instance_template resource. Format: sfc:instance_template:<account>:<workspace>:<name>.",
 				MarkdownDescription: "A resource path for a instance_template resource. Format: sfc:instance_template:<account>:<workspace>:<name>.",
 			},
+			"subnet": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Subnet instances started with this template are placed in, if any. Instances without a subnet use an ephemeral subnet (isolated, no east-west traffic with other VMs).",
+				MarkdownDescription: "Subnet instances started with this template are placed in, if any. Instances without a subnet use an ephemeral subnet (isolated, no east-west traffic with other VMs).",
+			},
 			"tags": schema.MapAttribute{
 				ElementType:         types.StringType,
 				Optional:            true,
