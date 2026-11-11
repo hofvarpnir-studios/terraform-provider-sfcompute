@@ -46,6 +46,7 @@ resource "sfcompute_instance_template" "worker" {
 - `id` (String) Accepts the canonical prefix below; additional legacy prefixes are aliased for read compatibility. Writes always emit the canonical form.
 - `owner` (String)
 - `resource_path` (String) A resource path for a instance_template resource. Format: sfc:instance_template:<account>:<workspace>:<name>.
+- `subnet` (String) Subnet instances started with this template are placed in, if any. Instances without a subnet use an ephemeral subnet (isolated, no east-west traffic with other VMs).
 - `workspace_id` (String)
 
 ## Import

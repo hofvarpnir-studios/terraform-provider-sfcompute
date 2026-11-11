@@ -1933,6 +1933,17 @@
                 "readOnly": true,
                 "type": "string"
               },
+              "subnet": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SubnetId",
+                    "description": "Subnet instances started with this template are placed in, if any. Instances without a subnet use an ephemeral subnet (isolated, no east-west traffic with other VMs)."
+                  }
+                ]
+              },
               "tags": {
                 "oneOf": [
                   {
@@ -2615,7 +2626,7 @@
         "type": "string"
       },
       "OrderStatus": {
-        "description": "The status of an order in the system.\n\n`pending` = not resolved/processed yet.\n\n`filled` = order executed.\n\n`partially_filled` = the order matched part of its requested capacity and remains active for the remainder.\n\n`standing` = the order is waiting for a match.\n\n`cancelled` = the order was cancelled either automatically (not a standing order and didn't immediately fill, or current time past `end_at`) or by explicit cancellation.\n\n`rejected` = validation/system error occurred.",
+        "description": "The status of an order in the system.\n\n`pending` = received and waiting to be matched.\n\n`filled` = order executed.\n\n`partially_filled` = the order matched part of its requested capacity and remains active for the remainder.\n\n`standing` = the order is waiting for a match.\n\n`cancelled` = the order was cancelled either automatically (not a standing order and didn't immediately fill, current time past `end_at`, the account can no longer cover it, or the account can no longer trade) or by explicit cancellation.\n\n`rejected` = the account couldn't cover the order when it came to match, or a system error occurred.",
         "enum": [
           "pending",
           "filled",
@@ -10503,7 +10514,7 @@
     },
     "/preview/v2/orders/{id}": {
       "delete": {
-        "description": "> ⚠️ This endpoint is in [public preview](/preview/roadmap#feature-states).\n\nRequest cancellation of an order. Cancellation is asynchronous.",
+        "description": "> ⚠️ This endpoint is in [public preview](/preview/roadmap#feature-states).\n\nCancel an order. The order is cancelled when the request returns. If the order is in the middle of a fill, the request returns 503. Try again in a few seconds.",
         "operationId": "cancel_order",
         "parameters": [
           {
