@@ -364,6 +364,17 @@
             "$ref": "#/components/schemas/ResourcePathOrId_ImageId",
             "description": "Machine image to use when starting instances with this template. Accepts name or ID."
           },
+          "infiniband_partition": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ResourcePathOrId_InfinibandPartitionId",
+                "description": "InfiniBand partition for instances started with this template to join. Accepts an `ibpart_` id or a resource path. When an instance is launched from this template, the partition must belong to the pool's workspace and sit on the selected SKU's InfiniBand fabric. GPU clusters and spot deployments don't accept templates with a partition. Available to accounts enrolled in the InfiniBand preview."
+              }
+            ]
+          },
           "name": {
             "oneOf": [
               {
@@ -1616,6 +1627,17 @@
               "image": {
                 "$ref": "#/components/schemas/ImageSummaryPreview",
                 "description": "Machine image to use when starting instances with this template."
+              },
+              "infiniband_partition": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/InfinibandPartitionId",
+                    "description": "InfiniBand partition instances started with this template join, if any."
+                  }
+                ]
               },
               "object": {
                 "const": "instance_template",
@@ -6006,7 +6028,7 @@
     },
     "/preview/v2/infiniband_partitions/{id}": {
       "delete": {
-        "description": "> ⚠️ This endpoint is in [public preview](/preview/roadmap#feature-states).\n\nDelete an InfiniBand partition. Fails while instances are attached.",
+        "description": "> ⚠️ This endpoint is in [public preview](/preview/roadmap#feature-states).\n\nDelete an InfiniBand partition. Fails while instances are attached or an instance template references it.",
         "operationId": "delete_infiniband_partition",
         "parameters": [
           {
@@ -6076,7 +6098,7 @@
                 }
               }
             },
-            "description": "InfiniBand partition cannot be deleted (e.g. it is named 'default', or it still has instances attached)."
+            "description": "InfiniBand partition cannot be deleted (e.g. it is named 'default', or it still has instances attached or an instance template references it)."
           },
           "429": {
             "content": {
@@ -10764,7 +10786,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Order cancellation initiated."
+            "description": "Order cancelled."
           },
           "400": {
             "content": {

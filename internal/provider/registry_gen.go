@@ -100,7 +100,7 @@ var ResourceDefinitions = []runtime.ResourceDefinition{
 	{
 		Name:          "instance_template",
 		Schema:        resource_instance_template.InstanceTemplateResourceSchema,
-		Create:        runtime.Operation{Method: "POST", Path: "/preview/v2/instance_templates", Body: []string{"cloud_init_user_data", "enable_public_ipv4", "firewall", "image", "name", "tags", "workspace"}},
+		Create:        runtime.Operation{Method: "POST", Path: "/preview/v2/instance_templates", Body: []string{"cloud_init_user_data", "enable_public_ipv4", "firewall", "image", "infiniband_partition", "name", "tags", "workspace"}},
 		Read:          runtime.Operation{Method: "GET", Path: "/preview/v2/instance_templates/{id}", PathParams: []runtime.Param{{Name: "id", Attr: "id", Required: true}}},
 		Update:        nil,
 		Delete:        runtime.Operation{Method: "DELETE", Path: "/preview/v2/instance_templates/{id}", PathParams: []runtime.Param{{Name: "id", Attr: "id", Required: true}}},
@@ -109,7 +109,7 @@ var ResourceDefinitions = []runtime.ResourceDefinition{
 		Spending:      false,
 		SpendingNote:  "",
 		Stable:        []string{"id", "created_at"},
-		ShapeMismatch: []string{"firewall", "image", "workspace"},
+		ShapeMismatch: []string{"firewall", "image", "infiniband_partition", "workspace"},
 		WorkspaceAttr: "workspace",
 		Renames:       nil,
 	},

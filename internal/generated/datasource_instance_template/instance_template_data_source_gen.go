@@ -68,6 +68,11 @@ func InstanceTemplateDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Machine image to use when starting instances with this template.",
 				MarkdownDescription: "Machine image to use when starting instances with this template.",
 			},
+			"infiniband_partition": schema.StringAttribute{
+				Computed:            true,
+				Description:         "InfiniBand partition instances started with this template join, if any.",
+				MarkdownDescription: "InfiniBand partition instances started with this template join, if any.",
+			},
 			"name": schema.StringAttribute{
 				Computed: true,
 			},
