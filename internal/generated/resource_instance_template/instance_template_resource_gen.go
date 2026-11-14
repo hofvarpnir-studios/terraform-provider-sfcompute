@@ -61,6 +61,15 @@ func InstanceTemplateResourceSchema(ctx context.Context) schema.Schema {
 					stringvalidator.RegexMatches(regexp.MustCompile("(image_[0-9a-zA-Z_-]{1,21}|vmi_[0-9a-zA-Z_-]{1,21})|(sfc:image:[a-zA-Z0-9._-]+(:[a-zA-Z0-9._-]+){2,2})"), ""),
 				},
 			},
+			"infiniband_partition": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "InfiniBand partition for instances started with this template to join. Accepts an `ibpart_` id or a resource path. When an instance is launched from this template, the partition must belong to the pool's workspace and sit on the selected SKU's InfiniBand fabric. GPU clusters and spot deployments don't accept templates with a partition. Available to accounts enrolled in the InfiniBand preview.",
+				MarkdownDescription: "InfiniBand partition for instances started with this template to join. Accepts an `ibpart_` id or a resource path. When an instance is launched from this template, the partition must belong to the pool's workspace and sit on the selected SKU's InfiniBand fabric. GPU clusters and spot deployments don't accept templates with a partition. Available to accounts enrolled in the InfiniBand preview.",
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(regexp.MustCompile("(ibpart_[0-9a-zA-Z_-]{1,21})|(sfc:infiniband_partition:[a-zA-Z0-9._-]+(:[a-zA-Z0-9._-]+){2,2})"), ""),
+				},
+			},
 			"name": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
