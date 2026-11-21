@@ -53,7 +53,7 @@ resource "sfcompute_order" "two_hours" {
 
 ### Optional
 
-- `_preview_preemption_limit_price_multiple` (String) **Preview.** Buy orders only. SF Compute lists the compute this order fills for sale at `limit_price_dollars_per_node_hour` times this multiple, rounded up to the next $0.000060/node-hour, as standing sell orders on the same pool that allow partial fills. Must be greater than `"1.0"` and at most `"1.5"`.
+- `_preview_preemption_limit_price_multiple` (String) **Preview.** Buy orders only. SF Compute lists the compute this order fills for sale at `limit_price_dollars_per_node_hour` times this multiple, rounded up to the next $0.000060/node-hour, as standing sell orders on the same pool that allow partial fills. Must be greater than `"1.0"` and at most `"1.2"`.
 
 When a listing fills, the pool loses that time and its instances terminate, lowest priority first. Sell fees apply. Cancelling this order doesn't cancel its listings.
 

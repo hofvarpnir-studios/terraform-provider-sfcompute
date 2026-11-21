@@ -42,6 +42,7 @@ Read-Only:
 - `firewall` (String) Firewall applied to instances started with this template. Present exactly when `enable_public_ipv4` is true.
 - `id` (String) Accepts the canonical prefix below; additional legacy prefixes are aliased for read compatibility. Writes always emit the canonical form.
 - `image` (Attributes) Machine image to use when starting instances with this template. (see [below for nested schema](#nestedatt--data--image))
+- `infiniband_partition` (String) InfiniBand partition instances started with this template join, if any.
 - `name` (String)
 - `owner` (String)
 - `resource_path` (String) A resource path for a instance_template resource. Format: sfc:instance_template:<account>:<workspace>:<name>.

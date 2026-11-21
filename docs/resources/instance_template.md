@@ -35,6 +35,7 @@ resource "sfcompute_instance_template" "worker" {
 - `cloud_init_user_data` (String) Base64-encoded [cloud-init user data](https://cloudinit.readthedocs.io/en/latest/explanation/format/index.html). Maximum 64KB. Instances created by a generic or spot deployment inherit this data from the referenced template, so bootstrap steps such as worker registration can be configured here.
 - `enable_public_ipv4` (Boolean) Assign a public IPv4 address to instances started with this template.
 - `firewall` (String) Firewall to apply to instances started with this template. Accepts name or ID. Required when `enable_public_ipv4` is true, and rejected when it is false.
+- `infiniband_partition` (String) InfiniBand partition for instances started with this template to join. Accepts an `ibpart_` id or a resource path. When an instance is launched from this template, the partition must belong to the pool's workspace and sit on the selected SKU's InfiniBand fabric. GPU clusters and spot deployments don't accept templates with a partition. Available to accounts enrolled in the InfiniBand preview.
 - `name` (String)
 - `tags` (Map of String) Metadata tags to attach to this instance template. Instances launched from it don't inherit these tags.
 - `workspace` (String) Workspace to create this template in. If omitted, the provider's `workspace` is used.
