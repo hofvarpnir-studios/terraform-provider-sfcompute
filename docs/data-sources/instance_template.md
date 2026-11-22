@@ -27,6 +27,7 @@ Reads instance template from SF Compute (`GET /preview/v2/instance_templates/{id
 - `enable_public_ipv4` (Boolean) Whether instances started with this template get a public IPv4 address.
 - `firewall` (String) Firewall applied to instances started with this template. Present exactly when `enable_public_ipv4` is true.
 - `image` (Attributes) Machine image to use when starting instances with this template. (see [below for nested schema](#nestedatt--image))
+- `infiniband_partition` (String) InfiniBand partition instances started with this template join, if any.
 - `name` (String)
 - `owner` (String)
 - `resource_path` (String) A resource path for a instance_template resource. Format: sfc:instance_template:<account>:<workspace>:<name>.

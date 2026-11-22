@@ -476,6 +476,17 @@
             "$ref": "#/components/schemas/ResourcePathOrId_ImageId",
             "description": "Machine image to use when starting instances with this template. Accepts name or ID."
           },
+          "infiniband_partition": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ResourcePathOrId_InfinibandPartitionId",
+                "description": "InfiniBand partition for instances started with this template to join. Accepts an `ibpart_` id or a resource path. When an instance is launched from this template, the partition must belong to the pool's workspace and sit on the selected SKU's InfiniBand fabric. GPU clusters and spot deployments don't accept templates with a partition. Available to accounts enrolled in the InfiniBand preview."
+              }
+            ]
+          },
           "name": {
             "oneOf": [
               {
@@ -576,6 +587,14 @@
           "name"
         ],
         "type": "object"
+      },
+      "Dollars": {
+        "description": "Non-negative dollar amount.",
+        "examples": [
+          "0.100000"
+        ],
+        "pattern": "^\\d+\\.\\d+$",
+        "type": "string"
       },
       "DollarsPerNodeHour": {
         "description": "Price in dollars per node-hour, encoded as a decimal string. Prices are rounded to the nearest $0.000060/node-hour market tick. This is one microdollar per node-minute. Responses contain the rounded value with six decimal places. Inputs must contain a decimal point, be non-negative, and not exceed $500/node-hour.",
@@ -1927,6 +1946,17 @@
                 "$ref": "#/components/schemas/ImageSummaryPreview",
                 "description": "Machine image to use when starting instances with this template."
               },
+              "infiniband_partition": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/InfinibandPartitionId",
+                    "description": "InfiniBand partition instances started with this template join, if any."
+                  }
+                ]
+              },
               "object": {
                 "const": "instance_template",
                 "default": "instance_template",
@@ -2334,7 +2364,7 @@
         "type": "object"
       },
       "ListOrderbookOrdersResponse": {
-        "description": "Paginated market orders, newest first. Delivery must start no earlier than 30 days before `requested_at`, regardless of when the order was created.",
+        "description": "Paginated market orders, newest first by default. Delivery must start no earlier than 30 days before `requested_at`, regardless of when the order was created.",
         "properties": {
           "cursor": {
             "oneOf": [
@@ -2374,6 +2404,14 @@
           },
           "requirements": {
             "$ref": "#/components/schemas/Requirements"
+          },
+          "total_count": {
+            "description": "Matching count when using search filters or sorting.",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
           },
           "window_relation": {
             "$ref": "#/components/schemas/OrderbookWindowRelation"
@@ -2625,6 +2663,16 @@
         "pattern": "ordr_[0-9a-zA-Z_-]{1,21}",
         "type": "string"
       },
+      "OrderSortBy": {
+        "enum": [
+          "-created_at",
+          "best_match",
+          "start_at",
+          "total_price",
+          "price_per_node_hour"
+        ],
+        "type": "string"
+      },
       "OrderStatus": {
         "description": "The status of an order in the system.\n\n`pending` = received and waiting to be matched.\n\n`filled` = order executed.\n\n`partially_filled` = the order matched part of its requested capacity and remains active for the remainder.\n\n`standing` = the order is waiting for a match.\n\n`cancelled` = the order was cancelled either automatically (not a standing order and didn't immediately fill, current time past `end_at`, the account can no longer cover it, or the account can no longer trade) or by explicit cancellation.\n\n`rejected` = the account couldn't cover the order when it came to match, or a system error occurred.",
         "enum": [
@@ -2770,6 +2818,17 @@
           },
           "status": {
             "$ref": "#/components/schemas/OrderbookOrderStatus"
+          },
+          "total_price": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Dollars",
+                "description": "Limit price for the entire requested schedule. Omitted if it cannot be represented."
+              }
+            ]
           }
         },
         "required": [
@@ -4401,11 +4460,25 @@
             "type": "object"
           },
           {
-            "description": "The sell's `capacity` does not hold the compute it would sell, after what that capacity's other open sell orders already offer. The quote estimates the order as if it did; placing it as is will be rejected.",
+            "description": "The sell's `capacity` does not hold the compute it would sell, after what that capacity's other open sell orders already offer. The order is estimated as if it did; placing it as is will be rejected.",
             "properties": {
               "type": {
                 "const": "insufficient_free_compute_balance",
                 "default": "insufficient_free_compute_balance",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "description": "The account's credits do not cover the buy at its limit price, after what the account's other open buy orders already commit. The limit is `post_order_body`'s on a quote, and the request's `limit_price_dollars_per_node_hour` when the response is `unavailable`. The order is estimated as if they did; placing it as is will be rejected.",
+            "properties": {
+              "type": {
+                "const": "insufficient_free_credit_balance",
+                "default": "insufficient_free_credit_balance",
                 "type": "string"
               }
             },
@@ -6813,7 +6886,7 @@
     },
     "/preview/v2/infiniband_partitions/{id}": {
       "delete": {
-        "description": "> ⚠️ This endpoint is in [public preview](/preview/roadmap#feature-states).\n\nDelete an InfiniBand partition. Fails while instances are attached.",
+        "description": "> ⚠️ This endpoint is in [public preview](/preview/roadmap#feature-states).\n\nDelete an InfiniBand partition. Fails while instances are attached or an instance template references it.",
         "operationId": "delete_infiniband_partition",
         "parameters": [
           {
@@ -6883,7 +6956,7 @@
                 }
               }
             },
-            "description": "InfiniBand partition cannot be deleted (e.g. it is named 'default', or it still has instances attached)."
+            "description": "InfiniBand partition cannot be deleted (e.g. it is named 'default', or it still has instances attached or an instance template references it)."
           },
           "429": {
             "content": {
@@ -9827,21 +9900,21 @@
             }
           },
           {
-            "description": "Start of the delivery range to search. Unix epoch seconds, minute-aligned.",
+            "description": "Start of the delivery range to search. Unix epoch seconds, minute-aligned. Required unless available_in_full is true.",
             "example": 1746057600,
             "in": "query",
             "name": "range_start_at",
-            "required": true,
+            "required": false,
             "schema": {
               "$ref": "#/components/schemas/UnixEpoch"
             }
           },
           {
-            "description": "End of the delivery range to search. Unix epoch seconds, minute-aligned, and no more than 30 days after `range_start_at`.",
+            "description": "End of the delivery range to search. Unix epoch seconds, minute-aligned. With available_in_full, defaults to the end of the current purchase window. Otherwise required and limited to 30 days after range_start_at.",
             "example": 1748649600,
             "in": "query",
             "name": "range_end_at",
-            "required": true,
+            "required": false,
             "schema": {
               "$ref": "#/components/schemas/UnixEpoch"
             }
@@ -9912,6 +9985,88 @@
             "schema": {
               "$ref": "#/components/schemas/OrderbookOrdersCursor"
             }
+          },
+          {
+            "description": "Return only unfilled orders whose full node count and delivery window are currently available to fill. When enabled, the search range defaults to the current purchase window.",
+            "in": "query",
+            "name": "available_in_full",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Earliest acceptable delivery start, inclusive.",
+            "in": "query",
+            "name": "start_after_at",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/UnixEpoch"
+            }
+          },
+          {
+            "description": "Latest acceptable delivery start, exclusive.",
+            "in": "query",
+            "name": "start_before_at",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/UnixEpoch"
+            }
+          },
+          {
+            "description": "Minimum nodes. Mutually exclusive with exact_nodes.",
+            "in": "query",
+            "name": "min_nodes",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "exact_nodes",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_duration_seconds",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "max_duration_seconds",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Maximum limit price for the entire requested schedule, in dollars.",
+            "in": "query",
+            "name": "max_total_price",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Dollars"
+            }
+          },
+          {
+            "description": "Defaults to newest first. Best match ranks nodes, duration, start, then total price.",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/OrderSortBy"
+            }
           }
         ],
         "responses": {
@@ -9924,6 +10079,16 @@
               }
             },
             "description": "Paginated list of orderbook orders."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestError"
+                }
+              }
+            },
+            "description": "Malformed query."
           },
           "401": {
             "content": {
@@ -9944,6 +10109,16 @@
               }
             },
             "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            },
+            "description": "Rate limited."
           },
           "500": {
             "content": {
@@ -10530,7 +10705,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Order cancellation initiated."
+            "description": "Order cancelled."
           },
           "400": {
             "content": {
