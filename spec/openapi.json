@@ -4321,7 +4321,7 @@
       "v2.EventResponsePreview": {
         "properties": {
           "action": {
-            "description": "The event type. Current values are `instance.created`, `instance.running`, `instance.failed`, `instance.connection_lost`, `instance.termination_imminent`, `instance.terminated`, `order.created`, `order.filled`, `order.cancelled`, `image.published`, `image.revoked`, `image.reinstated`, `image.deprecated`, `trust_level.updated`, `instance_sku_override.updated`, and `instance_sku_override.deleted`. New values may be added later.",
+            "description": "The event type. Current values are `instance.created`, `instance.running`, `instance.failed`, `instance.connection_lost`, `instance.termination_imminent`, `instance.terminated`, `order.created`, `order.partially_filled`, `order.filled`, `order.cancelled`, `image.published`, `image.revoked`, `image.reinstated`, `image.deprecated`, `trust_level.updated`, `instance_sku_override.updated`, and `instance_sku_override.deleted`. New values may be added later.",
             "example": "instance.terminated",
             "type": "string"
           },
