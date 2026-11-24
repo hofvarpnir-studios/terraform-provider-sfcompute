@@ -36,7 +36,7 @@ Reads events from SF Compute (`GET /preview/v2/events`). All pages are fetched u
 
 Read-Only:
 
-- `action` (String) The event type. Current values are `instance.created`, `instance.running`, `instance.failed`, `instance.connection_lost`, `instance.termination_imminent`, `instance.terminated`, `order.created`, `order.filled`, `order.cancelled`, `image.published`, `image.revoked`, `image.reinstated`, `image.deprecated`, `trust_level.updated`, `instance_sku_override.updated`, and `instance_sku_override.deleted`. New values may be added later.
+- `action` (String) The event type. Current values are `instance.created`, `instance.running`, `instance.failed`, `instance.connection_lost`, `instance.termination_imminent`, `instance.terminated`, `order.created`, `order.partially_filled`, `order.filled`, `order.cancelled`, `image.published`, `image.revoked`, `image.reinstated`, `image.deprecated`, `trust_level.updated`, `instance_sku_override.updated`, and `instance_sku_override.deleted`. New values may be added later.
 - `actor` (Attributes) Who performed the action. (see [below for nested schema](#nestedatt--data--actor))
 - `cursor` (String) Resume the stream from just after this event by passing this value as `starting_after`.
 - `id` (String) Unique identifier of the event.
